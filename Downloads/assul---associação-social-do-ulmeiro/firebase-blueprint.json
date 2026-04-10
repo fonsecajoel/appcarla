@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "A booking request for an event or hall rental.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the person booking" },
+        "contact": { "type": "string", "description": "Phone number or contact info" },
+        "date": { "type": "string", "format": "date", "description": "The requested date for the booking" },
+        "message": { "type": "string", "description": "Additional details about the booking" },
+        "type": { "type": "string", "enum": ["event", "hall"], "description": "Type of booking: event or hall rental" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"], "description": "Current status of the booking" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the booking was created" }
+      },
+      "required": ["name", "contact", "date", "type", "status", "createdAt"]
+    },
+    "MemberRequest": {
+      "title": "MemberRequest",
+      "description": "A request to become a member of the association.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the applicant" },
+        "contact": { "type": "string", "description": "Contact info" },
+        "status": { "type": "string", "enum": ["pending", "processed"], "description": "Status of the request" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the request was created" }
+      },
+      "required": ["name", "contact", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Collection of booking requests"
+    },
+    "/memberRequests/{requestId}": {
+      "schema": "MemberRequest",
+      "description": "Collection of membership requests"
+    }
+  }
+}
