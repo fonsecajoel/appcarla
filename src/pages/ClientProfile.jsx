@@ -6,6 +6,8 @@ import Medidas from './Medidas';
 import Sessoes from './Sessoes';
 import EstiloDeVida from './EstiloDeVida';
 import Relatorio from './Relatorio';
+import FichaFacial from './FichaFacial';
+import EsculpeDetox from './EsculpeDetox';
 
 export default function ClientProfile() {
   const { id } = useParams();
@@ -36,6 +38,8 @@ export default function ClientProfile() {
     { name: 'Sessões', path: 'sessoes' },
     { name: 'Estilo de Vida', path: 'estilo' },
     { name: 'Relatório/Notas', path: 'relatorio' },
+    { name: 'Ficha Facial', path: 'ficha-facial' },
+    { name: 'Esculpe Detox', path: 'esculpe-detox' },
   ];
 
   return (
@@ -74,6 +78,8 @@ export default function ClientProfile() {
           <Route path="sessoes" element={<Sessoes client={client} />} />
           <Route path="estilo" element={<EstiloDeVida client={client} />} />
           <Route path="relatorio" element={<Relatorio client={client} />} />
+          <Route path="ficha-facial" element={<FichaFacial client={client} />} />
+          <Route path="esculpe-detox" element={<EsculpeDetox client={client} />} />
         </Routes>
       </div>
     </div>

@@ -29,7 +29,9 @@ export const storeAPI = {
       },
       sessoes: Array.from({ length: 12 }, (_, i) => ({ id: i + 1, data: '', tratamentos: {}, supervisao: '' })),
       estiloVida: {},
-      relatorio: []
+      relatorio: [],
+      fichaFacial: {},
+      esculpeDetox: {}
     };
     memoryState = [newClient, ...memoryState];
     notify();
