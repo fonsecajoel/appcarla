@@ -73,7 +73,7 @@ export default function ClientProfile() {
 
       <div className="card" style={{ padding: 'var(--spacing-6)' }}>
         <Routes>
-          <Route path="" element={<Anamnese client={client} />} />
+          <Route path="" element={<Anamnese />} />
           <Route path="medidas" element={<Medidas client={client} />} />
           <Route path="sessoes" element={<Sessoes client={client} />} />
           <Route path="estilo" element={<EstiloDeVida client={client} />} />

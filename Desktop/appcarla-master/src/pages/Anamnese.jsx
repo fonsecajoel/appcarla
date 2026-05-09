@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import { storeAPI } from '../store/useStore';
 
 const Input = ({ label, field, type = 'text', value, onChange, onBlur }) => (
@@ -39,37 +40,34 @@ const CheckboxText = ({ label, fieldCheck, fieldText, checked, textValue, onChan
   </div>
 );
 
-export default function Anamnese({ client }) {
-  const [localData, setLocalData] = useState({
-    name: client.name,
-    ...(client.anamnese || {}),
-  });
+export default function Anamnese() {
+  const { id } = useParams();
+  const client = storeAPI.getClient(id);
+  const initialData = { name: client.name, ...(client.anamnese || {}) };
 
-  const clientIdRef = useRef(client.id);
+  const [localData, setLocalData] = useState(initialData);
+  const idRef = useRef(id);
 
-  useEffect(() => {
-    if (clientIdRef.current !== client.id) {
-      clientIdRef.current = client.id;
-      setLocalData({ name: client.name, ...(client.anamnese || {}) });
-    }
-  }, [client.id]);
+  if (idRef.current !== id) {
+    idRef.current = id;
+    const fresh = storeAPI.getClient(id);
+    setLocalData({ name: fresh.name, ...(fresh.anamnese || {}) });
+  }
 
   const handleChange = useCallback((field, value) => {
     setLocalData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
-  // Only persist to store on blur (not on every keystroke)
   const handleBlur = useCallback((field) => {
     setLocalData((prev) => {
-      const value = prev[field];
       if (field === 'name') {
-        storeAPI.updateClient(client.id, 'name', value);
+        storeAPI.updateClient(id, 'name', prev[field]);
       } else {
-        storeAPI.updateClient(client.id, 'anamnese', { [field]: value });
+        storeAPI.updateClient(id, 'anamnese', { [field]: prev[field] });
       }
       return prev;
     });
-  }, [client.id]);
+  }, [id]);
 
   return (
     <div className="animate-fade-in">
