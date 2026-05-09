@@ -52,7 +52,9 @@ export const storeAPI = {
   deleteClient: (id) => {
     memoryState = memoryState.filter((c) => c.id !== id);
     notify();
-  }
+  },
+  _subscribe: (fn) => listeners.add(fn),
+  _unsubscribe: (fn) => listeners.delete(fn),
 };
 
 export function useStore() {

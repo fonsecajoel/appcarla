@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Link, Routes, Route, useLocation, useParams, useNavigate } from 'react-router-dom';
-import { useStore } from '../store/useStore';
+import { storeAPI } from '../store/useStore';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import Anamnese from './Anamnese';
 import Medidas from './Medidas';
@@ -13,10 +14,20 @@ export default function ClientProfile() {
   const { id } = useParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { clients, deleteClient } = useStore();
-  const client = clients.find((c) => c.id === id);
 
-  if (!client) {
+  const clientInit = storeAPI.getClient(id);
+  const [clientName, setClientName] = useState(clientInit?.name || '');
+
+  useEffect(() => {
+    const unsubscribe = (newClients) => {
+      const found = newClients.find((c) => c.id === id);
+      if (found) setClientName(found.name);
+    };
+    storeAPI._subscribe(unsubscribe);
+    return () => storeAPI._unsubscribe(unsubscribe);
+  }, [id]);
+
+  if (!clientInit) {
     return (
       <div className="card mt-4 p-8 text-center">
         <p>Cliente não encontrado.</p>
@@ -27,7 +38,7 @@ export default function ClientProfile() {
 
   const handleDelete = () => {
     if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
-      deleteClient(id);
+      storeAPI.deleteClient(id);
       navigate('/');
     }
   };
@@ -49,11 +60,11 @@ export default function ClientProfile() {
           <ArrowLeft size={16} /> Dashboard
         </Link>
         <span>/</span>
-        <span style={{ color: 'var(--clr-text-main)', fontWeight: 500 }}>{client.name}</span>
+        <span style={{ color: 'var(--clr-text-main)', fontWeight: 500 }}>{clientName}</span>
       </div>
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="title" style={{ marginBottom: 0 }}>{client.name}</h1>
+        <h1 className="title" style={{ marginBottom: 0 }}>{clientName}</h1>
         <button className="btn btn-outline" style={{ color: 'var(--clr-danger)', borderColor: 'var(--clr-danger)' }} onClick={handleDelete}>
           <Trash2 size={18} /> Excluir
         </button>
@@ -74,12 +85,12 @@ export default function ClientProfile() {
       <div className="card" style={{ padding: 'var(--spacing-6)' }}>
         <Routes>
           <Route path="" element={<Anamnese />} />
-          <Route path="medidas" element={<Medidas client={client} />} />
-          <Route path="sessoes" element={<Sessoes client={client} />} />
-          <Route path="estilo" element={<EstiloDeVida client={client} />} />
-          <Route path="relatorio" element={<Relatorio client={client} />} />
-          <Route path="ficha-facial" element={<FichaFacial client={client} />} />
-          <Route path="esculpe-detox" element={<EsculpeDetox client={client} />} />
+          <Route path="medidas" element={<Medidas client={storeAPI.getClient(id)} />} />
+          <Route path="sessoes" element={<Sessoes client={storeAPI.getClient(id)} />} />
+          <Route path="estilo" element={<EstiloDeVida client={storeAPI.getClient(id)} />} />
+          <Route path="relatorio" element={<Relatorio client={storeAPI.getClient(id)} />} />
+          <Route path="ficha-facial" element={<FichaFacial client={storeAPI.getClient(id)} />} />
+          <Route path="esculpe-detox" element={<EsculpeDetox client={storeAPI.getClient(id)} />} />
         </Routes>
       </div>
     </div>
