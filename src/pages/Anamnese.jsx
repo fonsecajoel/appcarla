@@ -1,50 +1,73 @@
-import { useStore } from '../store/useStore';
+import { useState, useRef, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import { storeAPI } from '../store/useStore';
 
-export default function Anamnese({ client }) {
-  const { updateClient } = useStore();
+const Input = ({ label, field, type = 'text', value, onChange, onBlur }) => (
+  <div className="form-group">
+    <label>{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(field, e.target.value)}
+      onBlur={() => onBlur(field)}
+    />
+  </div>
+);
 
-  const handleChange = (field, value) => {
-    if (field === 'name') {
-      updateClient(client.id, 'name', value);
-    } else {
-      updateClient(client.id, 'anamnese', { [field]: value });
-    }
-  };
-
-  const data = client.anamnese || {};
-
-  const Input = ({ label, field, type = 'text' }) => (
-    <div className="form-group">
-      <label>{label}</label>
+const CheckboxText = ({ label, fieldCheck, fieldText, checked, textValue, onChange, onBlur }) => (
+  <div className="form-group" style={{ marginBottom: '1.5rem', background: 'var(--clr-sidebar)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+    <label className="checkbox-label" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>
       <input
-        type={type}
-        value={field === 'name' ? client.name : data[field] || ''}
-        onChange={(e) => handleChange(field, e.target.value)}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => {
+          onChange(fieldCheck, e.target.checked);
+          onBlur(fieldCheck);
+        }}
       />
-    </div>
-  );
+      {label}
+    </label>
+    {checked && (
+      <input
+        type="text"
+        placeholder="Qual/Quais/Observações?"
+        value={textValue}
+        onChange={(e) => onChange(fieldText, e.target.value)}
+        onBlur={() => onBlur(fieldText)}
+        style={{ marginTop: '0.5rem' }}
+      />
+    )}
+  </div>
+);
 
-  const CheckboxText = ({ label, fieldCheck, fieldText }) => (
-    <div className="form-group" style={{ marginBottom: '1.5rem', background: 'var(--clr-sidebar)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-      <label className="checkbox-label" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>
-        <input
-          type="checkbox"
-          checked={!!data[fieldCheck]}
-          onChange={(e) => handleChange(fieldCheck, e.target.checked)}
-        />
-        {label}
-      </label>
-      {data[fieldCheck] && (
-        <input
-          type="text"
-          placeholder="Qual/Quais/Observações?"
-          value={data[fieldText] || ''}
-          onChange={(e) => handleChange(fieldText, e.target.value)}
-          style={{ marginTop: '0.5rem' }}
-        />
-      )}
-    </div>
-  );
+export default function Anamnese() {
+  const { id } = useParams();
+  const client = storeAPI.getClient(id);
+  const initialData = { name: client.name, ...(client.anamnese || {}) };
+
+  const [localData, setLocalData] = useState(initialData);
+  const idRef = useRef(id);
+
+  if (idRef.current !== id) {
+    idRef.current = id;
+    const fresh = storeAPI.getClient(id);
+    setLocalData({ name: fresh.name, ...(fresh.anamnese || {}) });
+  }
+
+  const handleChange = useCallback((field, value) => {
+    setLocalData((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  const handleBlur = useCallback((field) => {
+    setLocalData((prev) => {
+      if (field === 'name') {
+        storeAPI.updateClient(id, 'name', prev[field]);
+      } else {
+        storeAPI.updateClient(id, 'anamnese', { [field]: prev[field] });
+      }
+      return prev;
+    });
+  }, [id]);
 
   return (
     <div className="animate-fade-in">
@@ -52,75 +75,75 @@ export default function Anamnese({ client }) {
       
       <h3 style={{ marginBottom: '1rem', color: 'var(--clr-primary)', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0.5rem' }}>Dados Pessoais</h3>
       <div className="grid grid-cols-3 mb-6">
-        <Input label="Data" field="data_ficha" type="date" />
-        <Input label="Nome" field="name" />
-        <Input label="Idade" field="idade" type="number" />
+        <Input label="Data" field="data_ficha" type="date" value={localData.data_ficha || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Nome" field="name" value={localData.name || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Idade" field="idade" type="number" value={localData.idade || ''} onChange={handleChange} onBlur={handleBlur} />
         <div className="form-group">
           <label>Sexo</label>
-          <select value={data.sexo || ''} onChange={(e) => handleChange('sexo', e.target.value)}>
+          <select value={localData.sexo || ''} onChange={(e) => { handleChange('sexo', e.target.value); handleBlur('sexo'); }}>
             <option value="">Selecione...</option>
             <option value="F">Feminino</option>
             <option value="M">Masculino</option>
             <option value="Outro">Outro</option>
           </select>
         </div>
-        <Input label="Data de Nascimento" field="data_nasc" type="date" />
-        <Input label="Profissão" field="profissao" />
-        <Input label="Etnia" field="etnia" />
-        <Input label="Estado Civil" field="estado_civil" />
-        <Input label="E-mail" field="email" type="email" />
-        <Input label="Indicação" field="indicacao" />
-        <Input label="Motivo da Visita" field="motivo" />
+        <Input label="Data de Nascimento" field="data_nasc" type="date" value={localData.data_nasc || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Profissão" field="profissao" value={localData.profissao || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Etnia" field="etnia" value={localData.etnia || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Estado Civil" field="estado_civil" value={localData.estado_civil || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="E-mail" field="email" type="email" value={localData.email || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Indicação" field="indicacao" value={localData.indicacao || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Motivo da Visita" field="motivo" value={localData.motivo || ''} onChange={handleChange} onBlur={handleBlur} />
       </div>
 
       <h3 style={{ marginBottom: '1rem', color: 'var(--clr-primary)', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0.5rem' }}>Endereço e Contato</h3>
       <div className="grid grid-cols-2 mb-6">
-        <Input label="Endereço" field="endereco" />
-        <Input label="Bairro" field="bairro" />
-        <Input label="Cidade" field="cidade" />
-        <Input label="CEP" field="cep" />
-        <Input label="Fone Residencial" field="fone_res" />
-        <Input label="Fone Comercial/Celular" field="fone_com" />
+        <Input label="Endereço" field="endereco" value={localData.endereco || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Bairro" field="bairro" value={localData.bairro || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Cidade" field="cidade" value={localData.cidade || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="CEP" field="cep" value={localData.cep || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Fone Residencial" field="fone_res" value={localData.fone_res || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Fone Comercial/Celular" field="fone_com" value={localData.fone_com || ''} onChange={handleChange} onBlur={handleBlur} />
       </div>
 
       <h3 style={{ marginBottom: '1rem', color: 'var(--clr-primary)', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0.5rem' }}>Em caso de emergência</h3>
       <div className="grid grid-cols-2 mb-6">
-        <Input label="Nome Contato" field="emerg_nome" />
-        <Input label="Telefone Contato" field="emerg_tel" />
-        <Input label="Médico" field="medico" />
-        <Input label="Telefone Médico" field="medico_tel" />
-        <Input label="Convênio Médico" field="convenio" />
-        <Input label="Carteirinha / Hospital" field="carteirinha" />
+        <Input label="Nome Contato" field="emerg_nome" value={localData.emerg_nome || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Telefone Contato" field="emerg_tel" value={localData.emerg_tel || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Médico" field="medico" value={localData.medico || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Telefone Médico" field="medico_tel" value={localData.medico_tel || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Convênio Médico" field="convenio" value={localData.convenio || ''} onChange={handleChange} onBlur={handleBlur} />
+        <Input label="Carteirinha / Hospital" field="carteirinha" value={localData.carteirinha || ''} onChange={handleChange} onBlur={handleBlur} />
       </div>
 
       <h3 style={{ marginBottom: '1rem', color: 'var(--clr-primary)', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0.5rem' }}>Histórico Clínico e Hábitos</h3>
       <div className="grid grid-cols-2 mb-6">
-        <CheckboxText label="Costuma permanecer muito tempo sentada?" fieldCheck="sentada" fieldText="sentada_obs" />
-        <CheckboxText label="Antecedentes cirúrgicos?" fieldCheck="cirurgia" fieldText="cirurgia_quais" />
-        <CheckboxText label="Tratamento estético anterior?" fieldCheck="estetico_ant" fieldText="estetico_qual" />
-        <CheckboxText label="Antecedentes alérgicos?" fieldCheck="alergia" fieldText="alergia_quais" />
-        <CheckboxText label="Funcionamento intestinal regular?" fieldCheck="intestino" fieldText="intestino_obs" />
-        <CheckboxText label="Pratica atividade física?" fieldCheck="esporte" fieldText="esporte_quais" />
-        <CheckboxText label="É fumante?" fieldCheck="fumante" fieldText="fumante_obs" />
-        <CheckboxText label="Alimentação balanceada?" fieldCheck="alimentacao" fieldText="alimentacao_tipo" />
-        <CheckboxText label="Ingere líquidos com frequência?" fieldCheck="liquido" fieldText="liquido_quanto" />
-        <CheckboxText label="É gestante? / Tem filhos?" fieldCheck="gestante" fieldText="gestante_quantos" />
-        <CheckboxText label="Problema ortopédico?" fieldCheck="ortopedico" fieldText="ortopedico_qual" />
-        <CheckboxText label="Faz algum tratamento médico?" fieldCheck="tratamento" fieldText="tratamento_qual" />
-        <CheckboxText label="Usa ou já usou ácidos na pele?" fieldCheck="acidos" fieldText="acidos_quais" />
-        <CheckboxText label="Já fez algum tratamento ortomolecular?" fieldCheck="ortomolecular" fieldText="ortomolecular_qual" />
-        <CheckboxText label="Cuidados Diários e produtos em uso?" fieldCheck="cuidados" fieldText="cuidados_quais" />
-        <CheckboxText label="Portador de Marcapasso?" fieldCheck="marcapasso" fieldText="marcapasso_obs" />
-        <CheckboxText label="Presença de metais?" fieldCheck="metais" fieldText="metais_local" />
-        <CheckboxText label="Antecedentes oncológicos?" fieldCheck="oncologico" fieldText="oncologico_qual" />
-        <CheckboxText label="Ciclo menstrual regular?" fieldCheck="menstrual" fieldText="menstrual_obs" />
-        <CheckboxText label="Usa método anticoncepcional?" fieldCheck="anticoncepcional" fieldText="anticoncepcional_qual" />
-        <CheckboxText label="Varizes?" fieldCheck="varizes" fieldText="varizes_grau" />
-        <CheckboxText label="Lesões?" fieldCheck="lesoes" fieldText="lesoes_quais" />
-        <CheckboxText label="Hipertensão?" fieldCheck="hipertensao" fieldText="hipertensao_obs" />
-        <CheckboxText label="Epilepsia?" fieldCheck="epilepsia" fieldText="epilepsia_obs" />
-        <CheckboxText label="Hipotensão?" fieldCheck="hipotensao" fieldText="hipotensao_obs" />
-        <CheckboxText label="Diabetes?" fieldCheck="diabetes" fieldText="diabetes_obs" />
+        <CheckboxText label="Costuma permanecer muito tempo sentada?" fieldCheck="sentada" fieldText="sentada_obs" checked={!!localData.sentada} textValue={localData.sentada_obs || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Antecedentes cirúrgicos?" fieldCheck="cirurgia" fieldText="cirurgia_quais" checked={!!localData.cirurgia} textValue={localData.cirurgia_quais || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Tratamento estético anterior?" fieldCheck="estetico_ant" fieldText="estetico_qual" checked={!!localData.estetico_ant} textValue={localData.estetico_qual || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Antecedentes alérgicos?" fieldCheck="alergia" fieldText="alergia_quais" checked={!!localData.alergia} textValue={localData.alergia_quais || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Funcionamento intestinal regular?" fieldCheck="intestino" fieldText="intestino_obs" checked={!!localData.intestino} textValue={localData.intestino_obs || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Pratica atividade física?" fieldCheck="esporte" fieldText="esporte_quais" checked={!!localData.esporte} textValue={localData.esporte_quais || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="É fumante?" fieldCheck="fumante" fieldText="fumante_obs" checked={!!localData.fumante} textValue={localData.fumante_obs || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Alimentação balanceada?" fieldCheck="alimentacao" fieldText="alimentacao_tipo" checked={!!localData.alimentacao} textValue={localData.alimentacao_tipo || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Ingere líquidos com frequência?" fieldCheck="liquido" fieldText="liquido_quanto" checked={!!localData.liquido} textValue={localData.liquido_quanto || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="É gestante? / Tem filhos?" fieldCheck="gestante" fieldText="gestante_quantos" checked={!!localData.gestante} textValue={localData.gestante_quantos || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Problema ortopédico?" fieldCheck="ortopedico" fieldText="ortopedico_qual" checked={!!localData.ortopedico} textValue={localData.ortopedico_qual || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Faz algum tratamento médico?" fieldCheck="tratamento" fieldText="tratamento_qual" checked={!!localData.tratamento} textValue={localData.tratamento_qual || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Usa ou já usou ácidos na pele?" fieldCheck="acidos" fieldText="acidos_quais" checked={!!localData.acidos} textValue={localData.acidos_quais || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Já fez algum tratamento ortomolecular?" fieldCheck="ortomolecular" fieldText="ortomolecular_qual" checked={!!localData.ortomolecular} textValue={localData.ortomolecular_qual || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Cuidados Diários e produtos em uso?" fieldCheck="cuidados" fieldText="cuidados_quais" checked={!!localData.cuidados} textValue={localData.cuidados_quais || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Portador de Marcapasso?" fieldCheck="marcapasso" fieldText="marcapasso_obs" checked={!!localData.marcapasso} textValue={localData.marcapasso_obs || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Presença de metais?" fieldCheck="metais" fieldText="metais_local" checked={!!localData.metais} textValue={localData.metais_local || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Antecedentes oncológicos?" fieldCheck="oncologico" fieldText="oncologico_qual" checked={!!localData.oncologico} textValue={localData.oncologico_qual || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Ciclo menstrual regular?" fieldCheck="menstrual" fieldText="menstrual_obs" checked={!!localData.menstrual} textValue={localData.menstrual_obs || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Usa método anticoncepcional?" fieldCheck="anticoncepcional" fieldText="anticoncepcional_qual" checked={!!localData.anticoncepcional} textValue={localData.anticoncepcional_qual || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Varizes?" fieldCheck="varizes" fieldText="varizes_grau" checked={!!localData.varizes} textValue={localData.varizes_grau || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Lesões?" fieldCheck="lesoes" fieldText="lesoes_quais" checked={!!localData.lesoes} textValue={localData.lesoes_quais || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Hipertensão?" fieldCheck="hipertensao" fieldText="hipertensao_obs" checked={!!localData.hipertensao} textValue={localData.hipertensao_obs || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Epilepsia?" fieldCheck="epilepsia" fieldText="epilepsia_obs" checked={!!localData.epilepsia} textValue={localData.epilepsia_obs || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Hipotensão?" fieldCheck="hipotensao" fieldText="hipotensao_obs" checked={!!localData.hipotensao} textValue={localData.hipotensao_obs || ''} onChange={handleChange} onBlur={handleBlur} />
+        <CheckboxText label="Diabetes?" fieldCheck="diabetes" fieldText="diabetes_obs" checked={!!localData.diabetes} textValue={localData.diabetes_obs || ''} onChange={handleChange} onBlur={handleBlur} />
       </div>
 
       <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--clr-sidebar)', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-primary)' }}>
@@ -131,8 +154,8 @@ export default function Anamnese({ client }) {
         <label className="checkbox-label" style={{ fontWeight: 600 }}>
           <input
             type="checkbox"
-            checked={!!data.termo_aceito}
-            onChange={(e) => handleChange('termo_aceito', e.target.checked)}
+            checked={!!localData.termo_aceito}
+            onChange={(e) => { handleChange('termo_aceito', e.target.checked); handleBlur('termo_aceito'); }}
           />
           Li e aceito os termos e afirmo que as informações acima são verdadeiras.
         </label>
