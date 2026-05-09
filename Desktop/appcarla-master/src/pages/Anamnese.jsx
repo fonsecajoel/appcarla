@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { storeAPI } from '../store/useStore';
 
 const Input = ({ label, field, type = 'text', value, onChange, onBlur }) => (
@@ -45,9 +45,13 @@ export default function Anamnese({ client }) {
     ...(client.anamnese || {}),
   });
 
-  // Sync if client changes from outside (e.g. switching clients)
+  const clientIdRef = useRef(client.id);
+
   useEffect(() => {
-    setLocalData({ name: client.name, ...(client.anamnese || {}) });
+    if (clientIdRef.current !== client.id) {
+      clientIdRef.current = client.id;
+      setLocalData({ name: client.name, ...(client.anamnese || {}) });
+    }
   }, [client.id]);
 
   const handleChange = useCallback((field, value) => {
