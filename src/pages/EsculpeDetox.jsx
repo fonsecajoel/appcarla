@@ -73,6 +73,52 @@ const SectionTitle = ({ children, marginTop = false }) => (
   <h3 style={{ marginBottom: '1rem', marginTop: marginTop ? '1.5rem' : undefined, color: 'var(--clr-primary)', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0.5rem' }}>{children}</h3>
 );
 
+const maTh = { border: '1px solid var(--clr-border)', padding: '4px 6px', background: 'var(--clr-sidebar)', fontSize: '0.75rem', fontWeight: 600, textAlign: 'left' };
+const maTd = { border: '1px solid var(--clr-border)', padding: '3px 6px', fontSize: '0.78rem' };
+
+const MedidaAreaTable = ({ prefix, alturas, data, handleChange, handleBlur }) => {
+  const rows = Array.from({ length: alturas }, (_, i) => i + 1);
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+      <thead>
+        <tr>
+          <th style={maTh}>Altura</th>
+          <th style={{ ...maTh, textAlign: 'center' }} colSpan={3}>1º Tratamento</th>
+          <th style={{ ...maTh, textAlign: 'center' }} colSpan={3}>2º Tratamento</th>
+        </tr>
+        <tr>
+          <th style={maTh}></th>
+          {['Início','Meio','Final','Início','Meio','Final'].map((h, i) => <th key={i} style={maTh}>{h}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(n => {
+          const fields = [
+            `${prefix}_h${n}_t1_inicio`, `${prefix}_h${n}_t1_meio`, `${prefix}_h${n}_t1_final`,
+            `${prefix}_h${n}_t2_inicio`, `${prefix}_h${n}_t2_meio`, `${prefix}_h${n}_t2_final`,
+          ];
+          return (
+            <tr key={n}>
+              <td style={maTd}>{n}</td>
+              {fields.map(f => (
+                <td key={f} style={maTd}>
+                  <input
+                    type="number"
+                    value={data[f] || ''}
+                    onChange={(e) => handleChange(f, e.target.value)}
+                    onBlur={() => handleBlur(f)}
+                    style={{ width: '100%', fontSize: '0.78rem', padding: '2px', border: 'none', background: 'transparent' }}
+                  />
+                </td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+};
+
 const protocolosOptions = [
   'Esculpe Detox', 'Esculpe Detox Week', 'Esculpe Detox Facial',
   'Esculpe 40+', 'Esculpe Detox SPA', 'Esculpe 21', 'Esculpe 60+', 'Esculpe (+)'
