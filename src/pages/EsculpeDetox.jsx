@@ -385,41 +385,117 @@ export default function EsculpeDetox({ client }) {
       </div>
 
       <SectionTitle>Massagem Avaliativa</SectionTitle>
-      <div className="grid grid-cols-2 mb-6">
-        <div>
-          <h4 style={{ marginBottom: '0.75rem', fontWeight: 600 }}>1º Tratamento</h4>
-          <Input label="Data de início" type="date" {...p('mass1_data_inicio')} />
-          <Input label="Peso inicial" type="number" {...p('mass1_peso_inicio')} />
-          <Input label="Data meio" type="date" {...p('mass1_data_meio')} />
-          <Input label="Peso meio" type="number" {...p('mass1_peso_meio')} />
-          <Input label="Data final" type="date" {...p('mass1_data_final')} />
-          <Input label="Peso final" type="number" {...p('mass1_peso_final')} />
+
+      {/* Termómetro de Desconforto + Peso lado a lado */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+
+        {/* Termómetro */}
+        <div style={{ border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--clr-primary)', color: '#fff', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.875rem' }}>
+            TERMÓMETRO DE DESCONFORTO <span style={{ fontWeight: 400, fontSize: '0.75rem' }}>(escala 0 a 10)</span>
+          </div>
+          <div style={{ padding: '0.75rem', fontSize: '0.8rem' }}>
+            {[
+              { label: 'Área 1 – Superior', fields: [['term_sup_inicio','Início da massagem'],['term_sup_final','Final da massagem']] },
+              { label: 'Área 2 – Central', fields: [], sub: [
+                { sublabel: 'REGIÃO DE FÍGADO', fields: [['term_figado_inicio','Início da massagem'],['term_figado_final','Final da massagem']] },
+                { sublabel: 'REGIÃO DE BAÇO', fields: [['term_baco_inicio','Início da massagem'],['term_baco_final','Final da massagem']] },
+                { sublabel: 'REGIÃO DE INTESTINO', fields: [['term_intestino_inicio','Início da massagem'],['term_intestino_final','Final da massagem']] },
+              ]},
+              { label: 'Área 3 – Inferior', fields: [], sub: [
+                { sublabel: 'REGIÃO DE VIRILHA', fields: [['term_virilha_inicio','Início da massagem'],['term_virilha_final','Final da massagem']] },
+                { sublabel: 'INFERIOR DE PERNA', fields: [['term_perna_inicio','Início da massagem'],['term_perna_final','Final da massagem']] },
+              ]},
+            ].map((area) => (
+              <div key={area.label} style={{ marginBottom: '0.75rem' }}>
+                <div style={{ fontWeight: 700, color: 'var(--clr-primary)', marginBottom: '0.25rem' }}>{area.label}</div>
+                {area.fields.map(([f, lbl]) => (
+                  <div key={f} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                    <span style={{ color: 'var(--clr-text-muted)' }}>{lbl}</span>
+                    <input type="number" min="0" max="10" value={data[f] || ''} onChange={(e) => handleChange(f, e.target.value)} onBlur={() => handleBlur(f)} style={{ width: '60px', padding: '2px 4px', fontSize: '0.8rem' }} />
+                  </div>
+                ))}
+                {(area.sub || []).map(s => (
+                  <div key={s.sublabel} style={{ marginLeft: '0.5rem', marginBottom: '0.4rem' }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--clr-text-muted)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>{s.sublabel}</div>
+                    {s.fields.map(([f, lbl]) => (
+                      <div key={f} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                        <span style={{ color: 'var(--clr-text-muted)' }}>{lbl}</span>
+                        <input type="number" min="0" max="10" value={data[f] || ''} onChange={(e) => handleChange(f, e.target.value)} onBlur={() => handleBlur(f)} style={{ width: '60px', padding: '2px 4px', fontSize: '0.8rem' }} />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
+
+        {/* Peso */}
         <div>
-          <h4 style={{ marginBottom: '0.75rem', fontWeight: 600 }}>2º Tratamento</h4>
-          <Input label="Data de início" type="date" {...p('mass2_data_inicio')} />
-          <Input label="Peso inicial" type="number" {...p('mass2_peso_inicio')} />
-          <Input label="Data meio" type="date" {...p('mass2_data_meio')} />
-          <Input label="Peso meio" type="number" {...p('mass2_peso_meio')} />
-          <Input label="Data final" type="date" {...p('mass2_data_final')} />
-          <Input label="Peso final" type="number" {...p('mass2_peso_final')} />
+          <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.75rem', padding: '0.4rem 0.75rem', background: 'var(--clr-sidebar)', borderRadius: 'var(--radius-sm)', display: 'inline-block' }}>PESO</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+            <thead>
+              <tr>
+                <th style={maTh}></th>
+                <th style={{ ...maTh, textAlign: 'center' }} colSpan={3}>1º Tratamento</th>
+                <th style={{ ...maTh, textAlign: 'center' }} colSpan={3}>2º Tratamento</th>
+              </tr>
+              <tr>
+                <th style={maTh}></th>
+                {['Início','Meio','Final','Início','Meio','Final'].map((h,i) => <th key={i} style={maTh}>{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={maTd}>Data</td>
+                {['mass1_data_inicio','mass1_data_meio','mass1_data_final','mass2_data_inicio','mass2_data_meio','mass2_data_final'].map(f => (
+                  <td key={f} style={maTd}>
+                    <input type="date" value={data[f] || ''} onChange={(e) => handleChange(f, e.target.value)} onBlur={() => handleBlur(f)} style={{ width: '100%', fontSize: '0.7rem', padding: '1px', border: 'none', background: 'transparent' }} />
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td style={maTd}>Peso</td>
+                {['mass1_peso_inicio','mass1_peso_meio','mass1_peso_final','mass2_peso_inicio','mass2_peso_meio','mass2_peso_final'].map(f => (
+                  <td key={f} style={maTd}>
+                    <input type="number" value={data[f] || ''} onChange={(e) => handleChange(f, e.target.value)} onBlur={() => handleBlur(f)} style={{ width: '100%', fontSize: '0.8rem', padding: '2px', border: 'none', background: 'transparent' }} />
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <SectionTitle>Termómetro de Desconforto (escala 0-10)</SectionTitle>
-      <div className="grid grid-cols-3 mb-6">
-        {['Região de Fígado','Região de Baço','Região de Intestino','Região de Virilha','Área Superior','Área Central','Área Inferior','Inferior de Perna'].map(zona => {
-          const key = zona.toLowerCase().replace(/[^a-z0-9]/g, '_');
-          return (
-            <div key={zona} className="form-group">
-              <label>{zona}</label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input type="number" placeholder="Início" min="0" max="10" value={data[`term_${key}_inicio`] || ''} onChange={(e) => handleChange(`term_${key}_inicio`, e.target.value)} onBlur={() => handleBlur(`term_${key}_inicio`)} style={{ width: '80px' }} />
-                <input type="number" placeholder="Final" min="0" max="10" value={data[`term_${key}_final`] || ''} onChange={(e) => handleChange(`term_${key}_final`, e.target.value)} onBlur={() => handleBlur(`term_${key}_final`)} style={{ width: '80px' }} />
-              </div>
-            </div>
-          );
-        })}
+      {/* Área 1 */}
+      <div style={{ border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', marginBottom: '1rem', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--clr-primary)', color: '#fff', padding: '0.4rem 1rem', fontWeight: 700, fontSize: '0.875rem' }}>ÁREA 1</div>
+        <div style={{ padding: '0.75rem' }}>
+          <MedidaAreaTable prefix="area1" alturas={5} data={data} handleChange={handleChange} handleBlur={handleBlur} />
+        </div>
+      </div>
+
+      {/* Área 2 */}
+      <div style={{ border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', marginBottom: '1rem', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--clr-primary)', color: '#fff', padding: '0.4rem 1rem', fontWeight: 700, fontSize: '0.875rem' }}>ÁREA 2</div>
+        <div style={{ padding: '0.75rem' }}>
+          <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.4rem' }}>DIREITO</div>
+          <MedidaAreaTable prefix="area2_dir" alturas={3} data={data} handleChange={handleChange} handleBlur={handleBlur} />
+          <div style={{ fontWeight: 600, fontSize: '0.8rem', margin: '0.75rem 0 0.4rem' }}>ESQUERDO</div>
+          <MedidaAreaTable prefix="area2_esq" alturas={3} data={data} handleChange={handleChange} handleBlur={handleBlur} />
+        </div>
+      </div>
+
+      {/* Área 3 */}
+      <div style={{ border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--clr-primary)', color: '#fff', padding: '0.4rem 1rem', fontWeight: 700, fontSize: '0.875rem' }}>ÁREA 3</div>
+        <div style={{ padding: '0.75rem' }}>
+          <div style={{ fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.4rem' }}>DIREITO</div>
+          <MedidaAreaTable prefix="area3_dir" alturas={4} data={data} handleChange={handleChange} handleBlur={handleBlur} />
+          <div style={{ fontWeight: 600, fontSize: '0.8rem', margin: '0.75rem 0 0.4rem' }}>ESQUERDO</div>
+          <MedidaAreaTable prefix="area3_esq" alturas={4} data={data} handleChange={handleChange} handleBlur={handleBlur} />
+        </div>
       </div>
 
       <SectionTitle>Dados de Bioimpedância (Opcional)</SectionTitle>
