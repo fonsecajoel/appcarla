@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { storeAPI } from '../store/useStore';
 
@@ -39,6 +39,89 @@ const medidasSessaoFields = [
   { key: 'panturrilhaEsq', label: 'Panturrilha Esq.' },
   { key: 'panturrilhaDir', label: 'Panturrilha Dir.' },
 ];
+
+function SignaturePad({ value, onChange }) {
+  const canvasRef = useRef(null);
+  const drawing = useRef(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (value) {
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0);
+      img.src = value;
+    }
+  }, []);
+
+  const getPos = (e, canvas) => {
+    const rect = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+  };
+
+  const start = (e) => {
+    e.preventDefault();
+    drawing.current = true;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const { x, y } = getPos(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (e) => {
+    e.preventDefault();
+    if (!drawing.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1a1a1a';
+    const { x, y } = getPos(e, canvas);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stop = (e) => {
+    e.preventDefault();
+    if (!drawing.current) return;
+    drawing.current = false;
+    onChange(canvasRef.current.toDataURL());
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    onChange('');
+  };
+
+  return (
+    <div style={{ marginTop: '1rem' }}>
+      <p style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Rubrica / Assinatura</p>
+      <canvas
+        ref={canvasRef}
+        width={500}
+        height={120}
+        onMouseDown={start}
+        onMouseMove={draw}
+        onMouseUp={stop}
+        onMouseLeave={stop}
+        onTouchStart={start}
+        onTouchMove={draw}
+        onTouchEnd={stop}
+        style={{ border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-sm)', cursor: 'crosshair', display: 'block', touchAction: 'none', background: '#fff', maxWidth: '100%' }}
+      />
+      <button type="button" onClick={clear} style={{ marginTop: '0.5rem', fontSize: '0.75rem', padding: '0.25rem 0.75rem', cursor: 'pointer', background: 'transparent', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-sm)', color: 'var(--clr-text-muted)' }}>
+        Limpar assinatura
+      </button>
+    </div>
+  );
+}
 
 export default function Sessoes({ client }) {
   const { id } = useParams();
@@ -315,6 +398,23 @@ export default function Sessoes({ client }) {
           }}
           placeholder="Escrever relatório..."
         />
+      </div>
+
+      <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--clr-sidebar)', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-border)' }}>
+        <label className="checkbox-label" style={{ fontWeight: 600 }}>
+          <input
+            type="checkbox"
+            checked={!!clientData?.sessoes_termo_aceito}
+            onChange={(e) => storeAPI.updateClient(clientId, 'sessoes_termo_aceito', () => e.target.checked)}
+          />
+          Declaro que as informações acima são verdadeiras. Li e aceito os termos de responsabilidade.
+        </label>
+        {!!clientData?.sessoes_termo_aceito && (
+          <SignaturePad
+            value={clientData?.sessoes_rubrica || ''}
+            onChange={(val) => storeAPI.updateClient(clientId, 'sessoes_rubrica', () => val)}
+          />
+        )}
       </div>
     </div>
   );
