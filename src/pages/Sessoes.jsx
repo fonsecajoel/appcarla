@@ -25,6 +25,21 @@ const tratamentos2List = [
   { id: 'ultra_som', label: 'Ultra Som' },
 ];
 
+const medidasSessaoFields = [
+  { key: 'peso', label: 'Peso (kg)' },
+  { key: 'busto', label: 'Busto' },
+  { key: 'bracoEsq', label: 'Braço Esq.' },
+  { key: 'bracoDir', label: 'Braço Dir.' },
+  { key: 'abdomen', label: 'Abdômen' },
+  { key: 'cintura', label: 'Cintura' },
+  { key: 'quadril', label: 'Quadril' },
+  { key: 'culote', label: 'Culote' },
+  { key: 'coxaEsq', label: 'Coxa Esq.' },
+  { key: 'coxaDir', label: 'Coxa Dir.' },
+  { key: 'panturrilhaEsq', label: 'Panturrilha Esq.' },
+  { key: 'panturrilhaDir', label: 'Panturrilha Dir.' },
+];
+
 export default function Sessoes({ client }) {
   const { id } = useParams();
   const clientId = client?.id || id;
@@ -74,6 +89,19 @@ export default function Sessoes({ client }) {
       });
       persist(updated);
       return updated;
+    });
+  }, [persist]);
+
+  const handleMedidaSessao = useCallback((sessaoId, field, value) => {
+    setSessoes(prev => prev.map(s =>
+      s.id !== sessaoId ? s : { ...s, medidas: { ...(s.medidas || {}), [field]: value } }
+    ));
+  }, []);
+
+  const handleMedidaSessaoBlur = useCallback((sessaoId) => {
+    setSessoes(prev => {
+      persist(prev);
+      return prev;
     });
   }, [persist]);
 
@@ -194,6 +222,73 @@ export default function Sessoes({ client }) {
                 </td>
               ))}
             </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ overflowX: 'auto', marginTop: '2rem' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+          <thead>
+            <tr style={{ background: 'var(--clr-sidebar)' }}>
+              <th style={thStyle}>Medidas →</th>
+              {sessoes.map(s => (
+                <th key={s.id} style={{ ...thStyle, minWidth: '110px' }} colSpan={2}>{s.id}ª</th>
+              ))}
+            </tr>
+            <tr style={{ background: 'var(--clr-sidebar)' }}>
+              <th style={thStyle}>Data →</th>
+              {sessoes.map(s => (
+                <th key={s.id} style={{ ...thStyle, padding: '2px' }} colSpan={2}>
+                  <input
+                    type="date"
+                    value={s.dataMedidas || ''}
+                    onChange={(e) => handleField(s.id, 'dataMedidas', e.target.value)}
+                    onBlur={() => handleFieldBlur(s.id, 'dataMedidas')}
+                    style={{ width: '100%', fontSize: '0.7rem', padding: '2px', border: 'none', background: 'transparent', color: 'var(--clr-text-main)' }}
+                  />
+                </th>
+              ))}
+            </tr>
+            <tr style={{ background: 'var(--clr-sidebar)' }}>
+              <th style={thStyle}></th>
+              {sessoes.map(s => (
+                <>
+                  <th key={`${s.id}-antes`} style={{ ...thStyle, fontSize: '0.7rem', color: 'var(--clr-text-muted)' }}>Antes</th>
+                  <th key={`${s.id}-apos`} style={{ ...thStyle, fontSize: '0.7rem', color: 'var(--clr-text-muted)' }}>Após</th>
+                </>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {medidasSessaoFields.map(({ key, label }, i) => (
+              <tr key={key} style={{ background: i % 2 === 0 ? 'var(--clr-bg)' : 'var(--clr-sidebar)' }}>
+                <td style={{ ...tdStyle, fontWeight: 500, whiteSpace: 'nowrap' }}>{label}</td>
+                {sessoes.map(s => (
+                  <>
+                    <td key={`${s.id}-antes`} style={{ ...tdStyle, padding: '2px' }}>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={s.medidas?.[`${key}_antes`] || ''}
+                        onChange={(e) => handleMedidaSessao(s.id, `${key}_antes`, e.target.value)}
+                        onBlur={() => handleMedidaSessaoBlur(s.id)}
+                        style={{ width: '50px', fontSize: '0.7rem', padding: '2px', border: 'none', background: 'transparent', color: 'var(--clr-text-main)', textAlign: 'center' }}
+                      />
+                    </td>
+                    <td key={`${s.id}-apos`} style={{ ...tdStyle, padding: '2px' }}>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={s.medidas?.[`${key}_apos`] || ''}
+                        onChange={(e) => handleMedidaSessao(s.id, `${key}_apos`, e.target.value)}
+                        onBlur={() => handleMedidaSessaoBlur(s.id)}
+                        style={{ width: '50px', fontSize: '0.7rem', padding: '2px', border: 'none', background: 'transparent', color: 'var(--clr-text-main)', textAlign: 'center' }}
+                      />
+                    </td>
+                  </>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
