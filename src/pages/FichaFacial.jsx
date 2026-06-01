@@ -85,13 +85,14 @@ function SignaturePad({ value, onChange }) {
 }
 
 export default function FichaFacial({ client }) {
-  const { updateClient } = useStore();
+  const { clients, updateClient } = useStore();
+  const liveClient = clients.find((c) => c.id === client.id) || client;
 
   const handleChange = (field, value) => {
     updateClient(client.id, 'fichaFacial', { [field]: value });
   };
 
-  const data = client.fichaFacial || {};
+  const data = liveClient.fichaFacial || {};
 
   const Input = ({ label, field, type = 'text', placeholder = '' }) => (
     <div className="form-group">

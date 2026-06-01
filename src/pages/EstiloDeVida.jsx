@@ -1,4 +1,88 @@
+import { useRef, useEffect } from 'react';
 import { useStore } from '../store/useStore';
+
+function SignaturePad({ value, onChange }) {
+  const canvasRef = useRef(null);
+  const drawing = useRef(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (value) {
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0);
+      img.src = value;
+    }
+  }, []);
+
+  const getPos = (e, canvas) => {
+    const rect = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+  };
+
+  const start = (e) => {
+    e.preventDefault();
+    drawing.current = true;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const { x, y } = getPos(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const draw = (e) => {
+    e.preventDefault();
+    if (!drawing.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1a1a1a';
+    const { x, y } = getPos(e, canvas);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stop = (e) => {
+    e.preventDefault();
+    if (!drawing.current) return;
+    drawing.current = false;
+    onChange(canvasRef.current.toDataURL());
+  };
+
+  const clear = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    onChange('');
+  };
+
+  return (
+    <div style={{ marginTop: '1rem' }}>
+      <p style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Rubrica / Assinatura</p>
+      <canvas
+        ref={canvasRef}
+        width={500}
+        height={120}
+        onMouseDown={start}
+        onMouseMove={draw}
+        onMouseUp={stop}
+        onMouseLeave={stop}
+        onTouchStart={start}
+        onTouchMove={draw}
+        onTouchEnd={stop}
+        style={{ border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-sm)', cursor: 'crosshair', display: 'block', touchAction: 'none', background: '#fff', maxWidth: '100%' }}
+      />
+      <button type="button" onClick={clear} style={{ marginTop: '0.5rem', fontSize: '0.75rem', padding: '0.25rem 0.75rem', cursor: 'pointer', background: 'transparent', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-sm)', color: 'var(--clr-text-muted)' }}>
+        Limpar assinatura
+      </button>
+    </div>
+  );
+}
 
 const columns = {
   DIGESTORIO: { label: 'Digestório', questions: [1, 4, 5, 15] },
@@ -89,11 +173,16 @@ const getBadgeColor = (label) => {
 };
 
 export default function EstiloDeVida({ client }) {
-  const { updateClient } = useStore();
-  const estilo = client.estiloVida || {};
+  const { clients, updateClient } = useStore();
+  const liveClient = clients.find((c) => c.id === client.id) || client;
+  const estilo = liveClient.estiloVida || {};
 
   const handleToggle = (qNum) => {
     updateClient(client.id, 'estiloVida', { [qNum]: !estilo[qNum] });
+  };
+
+  const handleFieldChange = (field, value) => {
+    updateClient(client.id, 'estiloVida', { [field]: value });
   };
 
   const systemScores = Object.entries(columns).map(([key, col], index) => {
@@ -133,6 +222,37 @@ export default function EstiloDeVida({ client }) {
             </span>
           </label>
         ))}
+      </div>
+
+      <div style={{ marginTop: '2rem' }}>
+        <h3 style={{ marginBottom: '1rem', color: 'var(--clr-primary)', borderBottom: '1px solid var(--clr-border)', paddingBottom: '0.5rem' }}>Data e Observações</h3>
+        <div className="grid grid-cols-2 mb-6">
+          <div className="form-group">
+            <label>Data da Avaliação</label>
+            <input
+              type="date"
+              value={estilo.data_avaliacao || ''}
+              onChange={(e) => handleFieldChange('data_avaliacao', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Observações / Comentários</label>
+          <textarea
+            rows={4}
+            value={estilo.observacoes || ''}
+            onChange={(e) => handleFieldChange('observacoes', e.target.value)}
+            placeholder="Escreva aqui as suas observações..."
+            style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--clr-border)', background: 'var(--clr-input-bg)', color: 'var(--clr-text-main)', resize: 'vertical' }}
+          />
+        </div>
+      </div>
+
+      <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--clr-sidebar)', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-primary)' }}>
+        <SignaturePad
+          value={estilo.rubrica || ''}
+          onChange={(val) => handleFieldChange('rubrica', val)}
+        />
       </div>
     </div>
   );
